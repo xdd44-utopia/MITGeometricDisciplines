@@ -1,0 +1,146 @@
+from ast import Delete
+from Rhino.Geometry import NurbsSurface, Polyline, Point3d
+import rhinoscriptsyntax as rs
+import scriptcontext as sc
+from math import *
+
+def frange(start, stop=None, step=None):
+    # if set start=0.0 and step = 1.0 if not specified
+    start = float(start)
+    if stop == None:
+        stop = start + 0.0
+        start = 0.0
+    if step == None:
+        step = 1.0
+
+    count = 0
+    while True:
+        temp = float(start + count * step)
+        if step > 0 and temp >= stop:
+            break
+        elif step < 0 and temp <= stop:
+            break
+        yield temp
+        count += 1
+
+def x1(u, v):
+    u += v
+    return cos(u) * (sin(v)) + ((1 * cos(3 * u) + 3 * cos(5 * u)) / 24)
+
+def y1(u, v):
+    u += v
+    return sin(u) * (sin(v)) + ((1 * sin(3 * u) + 3 * sin(5 * u)) / 24)
+
+def z1(u, v):
+    return cos(v) * 1.125
+
+def x2(u, v):
+    u += v
+    u = - u
+    return cos(u) * sin(v) + cos(3 * u) / 4
+
+def y2(u, v):
+    u += v
+    u = - u
+    return sin(u) * sin(v) + sin(3 * u) / 4
+
+def z2(u, v):
+    return cos(v) * 1.125
+
+def generate(x, y, z, ustep, vstep):
+
+    for i, u in enumerate(frange(0, pi * 2, ustep)):
+        for j, v in enumerate(frange(0, pi, vstep)):
+
+            if (v == vstep * 4 or v == pi - vstep * 5):
+                cur = Point3d(x[0](u, v) * offsetx[0], y[0](u, v) * offsety[0], z[0](u, v))
+                uu = u + ustep
+                vv = v + vstep
+                nex = Point3d(x[0](uu, vv) * offsetx[0], y[0](uu, vv) * offsety[0], z[0](uu, vv))
+                surface = NurbsSurface.CreateFromCorners(
+                    Point3d(x[0](u, v) * offsetx[0], y[0](u, v) * offsety[0], z[0](u, v)),
+                    Point3d(x[0](uu, v) * offsetx[0], y[0](uu, v) * offsety[0], z[0](uu, v)),
+                    Point3d(x[0](uu, vv) * offsetx[0], y[0](uu, vv) * offsety[0], z[0](uu, vv)),
+                    Point3d(x[0](u, vv) * offsetx[0], y[0](u, vv) * offsety[0], z[0](u, vv))
+                )
+                sc.doc.Objects.AddSurface(surface)
+                continue
+
+            if (v <= vstep * 3 or v > pi - vstep * 5):
+                continue
+            
+            for f in range(len(x)):
+                cur = Point3d(x[f](u, v) * offsetx[f], y[f](u, v) * offsety[f], z[f](u, v))
+                uu = u + ustep
+                vv = v + vstep
+                nex = Point3d(x[f](uu, vv) * offsetx[f], y[f](uu, vv) * offsety[f], z[f](uu, vv))
+                # segment = Polyline((cur, nex))
+                # sc.doc.Objects.AddPolyline(segment)
+
+                if (f > 0 and i % 4 == 0):
+                    surface = NurbsSurface.CreateFromCorners(
+                        Point3d(x[f](u, v) * offsetx[f], y[f](u, v) * offsety[f], z[f](u, v)),
+                        Point3d(x[f](uu, vv) * offsetx[f], y[f](uu, vv) * offsety[f], z[f](uu, vv)),
+                        Point3d(x[f - 1](uu, vv) * offsetx[f - 1], y[f - 1](uu, vv) * offsety[f - 1], z[f - 1](uu, vv)),
+                        Point3d(x[f - 1](u, v) * offsetx[f - 1], y[f - 1](u, v) * offsety[f - 1], z[f - 1](u, v))
+                    )
+                    uu = u + 3 * ustep
+                    vv = v + vstep
+                    for kk in range(2):
+                        k = kk + j
+                        p1 = [
+                            Point3d(x[f](u + k * ustep, v) * offsetx[f], y[f](u + k * ustep, v) * offsety[f], z[f](u + k * ustep, v)),
+                            Point3d(x[f](u + (k + 1) * ustep, v) * offsetx[f], y[f](u + (k + 1) * ustep, v) * offsety[f], z[f](u + (k + 1) * ustep, v)),
+                            Point3d(x[f](u + (k + 2) * ustep, v + vstep) * offsetx[f], y[f](u + (k + 2) * ustep, v + vstep) * offsety[f], z[f](u + (k + 2) * ustep, v + vstep)),
+                            Point3d(x[f](u + (k + 1) * ustep, v + vstep) * offsetx[f], y[f](u + (k + 1) * ustep, v + vstep) * offsety[f], z[f](u + (k + 1) * ustep, v + vstep))
+                        ]
+                        p2 = [
+                            Point3d(x[f - 1](u + k * ustep, v) * offsetx[f - 1], y[f - 1](u + k * ustep, v) * offsety[f - 1], z[f - 1](u + k * ustep, v)),
+                            Point3d(x[f - 1](u + (k + 1) * ustep, v) * offsetx[f - 1], y[f - 1](u + (k + 1) * ustep, v) * offsety[f - 1], z[f - 1](u + (k + 1) * ustep, v)),
+                            Point3d(x[f - 1](u + (k + 2) * ustep, v + vstep) * offsetx[f - 1], y[f - 1](u + (k + 2) * ustep, v + vstep) * offsety[f - 1], z[f - 1](u + (k + 2) * ustep, v + vstep)),
+                            Point3d(x[f - 1](u + (k + 1) * ustep, v + vstep) * offsetx[f - 1], y[f - 1](u + (k + 1) * ustep, v + vstep) * offsety[f - 1], z[f - 1](u + (k + 1) * ustep, v + vstep))
+                        ]
+                        surface = NurbsSurface.CreateFromCorners(p1[0], p1[1], p1[2], p1[3])
+                        sc.doc.Objects.AddSurface(surface)
+                        surface = NurbsSurface.CreateFromCorners(p2[0], p2[1], p2[2], p2[3])
+                        sc.doc.Objects.AddSurface(surface)
+                        if (kk == 0):
+                            surface = NurbsSurface.CreateFromCorners(p1[0], p1[3], p2[3], p2[0])
+                            sc.doc.Objects.AddSurface(surface)
+                        elif (kk == 1):
+                            surface = NurbsSurface.CreateFromCorners(p1[1], p1[2], p2[2], p2[1])
+                            sc.doc.Objects.AddSurface(surface)
+
+xf = [x1, x1]
+yf = [y1, y1]
+zf = [z1, z1]
+offsetx = [1, 0.9]
+offsety = [1, 0.9]
+    
+ustep = pi / 32
+vstep = pi / 16
+
+generate(xf, yf, zf, ustep, vstep)
+
+xf = [x2, x2]
+yf = [y2, y2]
+zf = [z2, z2]
+offsetx = [0.5, 0.6]
+offsety = [0.5, 0.6]
+    
+ustep = pi / 16
+vstep = pi / 16
+
+generate(xf, yf, zf, ustep, vstep)
+
+
+# for u in frange(0, pi * 2, ustep):
+#     for v in frange(0, pi, vstep):
+#         cur = Point3d(x2(u, v) * scale, y2(u, v) * scale, z2(u, v))
+#         uu = u + ustep
+#         vv = v
+#         nex = Point3d(x2(uu, vv) * scale, y2(uu, vv) * scale, z2(uu, vv))
+#         segment = Polyline((cur, nex))
+#         sc.doc.Objects.AddPolyline(segment)
+
+sc.doc.Views.Redraw()
