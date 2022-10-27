@@ -117,8 +117,8 @@ zf = [z1, z1]
 offsetx = [1, 0.9]
 offsety = [1, 0.9]
     
-ustep = pi / 32
-vstep = pi / 16
+ustep = pi / 128
+vstep = pi / 64
 
 generate(xf, yf, zf, ustep, vstep)
 
@@ -128,8 +128,8 @@ zf = [z2, z2]
 offsetx = [0.5, 0.6]
 offsety = [0.5, 0.6]
     
-ustep = pi / 16
-vstep = pi / 16
+ustep = pi / 64
+vstep = pi / 64
 
 generate(xf, yf, zf, ustep, vstep)
 
