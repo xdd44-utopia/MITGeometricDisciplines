@@ -141,7 +141,7 @@ def generate(x, y, z, ustep, ufreq, vstep, cuttingInterval, thickness, coneTopDi
 
         for j, v in enumerate(frange(0, pi, vstep)):
 
-            if (v <= vfreq * 2 - vstep or v > pi - vfreq * 2 - vstep):
+            if (v <= vfreq - vstep or v > pi - vfreq - vstep):
                 continue
             
             uu = u + ustep
@@ -221,17 +221,17 @@ thickness = 25
 
 generate(x1, y1, z1, ustep, ufreq, vstep, cuttingInterval, thickness, 1.5, 1)
 
-offsetx = 50
-offsety = 50
-offsetz = 112.5
+# offsetx = 50
+# offsety = 50
+# offsetz = 112.5
 
-ustep = pi / 64
-ufreq = ustep * 16
-vstep = pi / 64
-vfreq = vstep * 8
-cuttingInterval = 25
-thickness = 25
+# ustep = pi / 64
+# ufreq = ustep * 16
+# vstep = pi / 64
+# vfreq = vstep * 8
+# cuttingInterval = 25
+# thickness = 25
 
-generate(x1, y1, z1, ustep, ufreq, vstep, cuttingInterval, thickness, 1.5, 0)
+# generate(x1, y1, z1, ustep, ufreq, vstep, cuttingInterval, thickness, 1.5, 0)
 
 sc.doc.Views.Redraw()
