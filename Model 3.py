@@ -49,13 +49,13 @@ cuttingPos = [
 ]
 
 def x1(u, v):
-    return cos(u) * sin(v) + (1 * cos(3 * u) + 3 * cos(5 * u)) / 24
+    return cos(u) * sin(v) + (1 * cos(3 * u) + 5 * cos(5 * u)) / 24
 
 def y1(u, v):
-    return sin(u) * sin(v) + (1 * sin(3 * u) + 3 * sin(5 * u)) / 24
+    return sin(u) * sin(v) + (1 * sin(3 * u) + 5 * sin(5 * u)) / 24
 
 def z1(u, v):
-    return cos(v) * 1.125
+    return cos(v)
 
 def x2(u, v):
     u += v
@@ -70,6 +70,15 @@ def y2(u, v):
 def z2(u, v):
     return cos(v)
 
+def x1(u, v):
+    return cos(u) * sin(v) + cos(v * u)
+
+def y1(u, v):
+    return sin(u) * sin(v) + sin(v * u)
+
+def z1(u, v):
+    return cos(v)
+
 def generate(x, y, z, ustep, ufreq, vstep, cuttingInterval, thickness, coneTopDist, direction):
 
     # direction 0: yz, 1: xz, 2: xy
@@ -82,10 +91,12 @@ def generate(x, y, z, ustep, ufreq, vstep, cuttingInterval, thickness, coneTopDi
 
     cuttingPlanes = []
     pieces = [[] for i in range(int(pi * 2 / ustep))]
+    bounding = max(abs(x(0, pi / 2)), abs(x(pi / 2, pi / 2)), abs(y(0, pi / 2)), abs(y(pi / 2, pi / 2)))
 
-    for v in frange(cuttingInterval, y(pi / 2, pi / 2) * offsetx, cuttingInterval):
-        px = v if direction == 0 else x(0, pi / 2) * offsetx
-        py = v if direction == 1 else y(pi / 2, pi / 2) * offsety
+    for v in frange(cuttingInterval, bounding * offsetx, cuttingInterval):
+
+        px = v if direction == 0 else bounding * offsetx
+        py = v if direction == 1 else bounding * offsety
         pz = v if direction == 2 else z(0, pi) * offsetz
 
         surface1 = NurbsSurface.CreateFromCorners(
@@ -141,7 +152,7 @@ def generate(x, y, z, ustep, ufreq, vstep, cuttingInterval, thickness, coneTopDi
 
         for j, v in enumerate(frange(0, pi, vstep)):
 
-            if (v <= vfreq - vstep or v > pi - vfreq - vstep):
+            if (v <= vfreq * 2 - vstep or v > pi - vfreq * 2 - vstep):
                 continue
             
             uu = u + ustep
@@ -158,15 +169,17 @@ def generate(x, y, z, ustep, ufreq, vstep, cuttingInterval, thickness, coneTopDi
             pieces[i].append(sc.doc.Objects.AddSurface(surface))
 
     def extendPos(base):
-        v = base - (1 if base[direction] > 0 else -1) * coneTop
-        v = normalize(v)
+        # v = base - (1 if base[direction] > 0 else -1) * coneTop
+        v = base + coneTop
+        v = normalizeV(v)
         v = Point3d(v[0], v[1], v[2]) * thickness
         return base + v
     
     def mirrorPos(base, mirrorPlane):
         # mirrorPlane = 0 : yz, 1 : xz, 2 : xy
-        v = base - (1 if base[direction] > 0 else -1) * coneTop
-        v = normalize(v)
+        # v = base - (1 if base[direction] > 0 else -1) * coneTop
+        v = base + coneTop
+        v = normalizeV(v)
         v = Point3d(v[0], v[1], v[2]) * thickness
         v[mirrorPlane] = - v[mirrorPlane]
         v = - v
@@ -212,26 +225,26 @@ offsetx = 100
 offsety = 100
 offsetz = 112.5
 
-ustep = pi / 64
-ufreq = ustep * 16
-vstep = pi / 64
-vfreq = vstep * 8
-cuttingInterval = 25
-thickness = 25
-
-generate(x1, y1, z1, ustep, ufreq, vstep, cuttingInterval, thickness, 1.5, 1)
-
-# offsetx = 50
-# offsety = 50
-# offsetz = 112.5
-
 # ustep = pi / 64
 # ufreq = ustep * 16
 # vstep = pi / 64
 # vfreq = vstep * 8
 # cuttingInterval = 25
-# thickness = 25
+# thickness = 12.5
 
-# generate(x1, y1, z1, ustep, ufreq, vstep, cuttingInterval, thickness, 1.5, 0)
+# generate(x1, y1, z1, ustep, ufreq, vstep, cuttingInterval, thickness, 1.5, 1)
+
+offsetx = 100
+offsety = 100
+offsetz = 112.5
+
+ustep = pi / 64
+ufreq = ustep * 16
+vstep = pi / 64
+vfreq = vstep * 8
+cuttingInterval = 15
+thickness = 16
+
+generate(x1, y1, z1, ustep, ufreq, vstep, cuttingInterval, thickness, 1.5, 2)
 
 sc.doc.Views.Redraw()

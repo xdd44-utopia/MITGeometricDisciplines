@@ -1,4 +1,5 @@
 import math
+from Rhino.Geometry import Point3d
 
 def frange(start, stop=None, step=None):
     # if set start=0.0 and step = 1.0 if not specified
@@ -19,7 +20,15 @@ def frange(start, stop=None, step=None):
         yield temp
         count += 1
 
-def normalize(v):
-    len = math.sqrt(sum(x ** 2 for x in v))
-    v = map(lambda x : x / len, v)
-    return v
+def normalizeV(v):
+    v = map(lambda x : x / magnitudeV(v), v)
+    return Point3d(v[0], v[1], v[2])
+
+def magnitudeV(v):
+    return math.sqrt(sum(x ** 2 for x in v))
+
+def dotProduct(u, v):
+    return sum(u[i] * v[i] for i in range(len(u)))
+
+def crossProduct(u, v):
+    return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
